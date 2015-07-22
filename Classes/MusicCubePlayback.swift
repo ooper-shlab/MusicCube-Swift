@@ -54,8 +54,8 @@
  */
 
 import UIKit
-import OpenAL.AL
-import OpenAL.ALC
+import OpenAL
+
 typealias ALCcontext = COpaquePointer
 typealias ALCdevice = COpaquePointer
 import AVFoundation.AVAudioSession
@@ -93,9 +93,9 @@ class MusicCubePlayback: NSObject {
                 playing = false
             }
         } else if interruptionType == AVAudioSessionInterruptionType.Ended.rawValue {
-            var error: NSError? = nil
-            AVAudioSession.sharedInstance().setActive(true, error: &error)
-            if error != nil { NSLog("Error setting audio session active! %@", error!) }
+            do {
+                try AVAudioSession.sharedInstance().setActive(true)
+            } catch let error as NSError { NSLog("Error setting audio session active! %@", error) }
             
             self.initOpenAL()
             if wasInterrupted {
@@ -120,13 +120,15 @@ class MusicCubePlayback: NSObject {
             name: AVAudioSessionInterruptionNotification,
             object: sessionInstance)
         
-        var error: NSError? = nil
-        sessionInstance.setCategory(AVAudioSessionCategoryAmbient, error: &error)
-        if error != nil {
-            NSLog("Error setting audio session category! %@", error!)
-        } else {
-            sessionInstance.setActive(true, error: &error)
-            if error != nil { NSLog("Error setting audio session active! %@", error!) }
+        do {
+            try sessionInstance.setCategory(AVAudioSessionCategoryAmbient)
+        } catch let error as NSError {
+            NSLog("Error setting audio session category! %@", error)
+        }
+        do {
+            try sessionInstance.setActive(true)
+        } catch let error as NSError {
+            NSLog("Error setting audio session active! %@", error)
         }
         
         wasInterrupted = false
@@ -152,7 +154,7 @@ class MusicCubePlayback: NSObject {
         let bundle = NSBundle.mainBundle()
         
         // get some audio data from a wave file
-        if let fileURL = NSURL(fileURLWithPath: bundle.pathForResource("sound", ofType: "wav")!) {
+        let fileURL = NSURL(fileURLWithPath: bundle.pathForResource("sound", ofType: "wav")!)
             
             _data = MyGetOpenALAudioData(fileURL, &size, &format, &freq)
             
@@ -170,10 +172,10 @@ class MusicCubePlayback: NSObject {
             if error != AL_NO_ERROR {
                 print("error attaching audio to buffer: \(String(error, radix: 16))")
             }
-        } else {
-            print("Could not find file!")
-            _data = nil
-        }
+//        } else {
+//            print("Could not find file!")
+//            _data = nil
+//        }
     }
     
     private func initSource() {
@@ -309,7 +311,7 @@ class MusicCubePlayback: NSObject {
     
     
     private func didSetListenerRotation(radians: Float) {
-        var ori: [Float] = [0.0, cos(radians), sin(radians), 1.0, 0.0, 0.0]
+        let ori: [Float] = [0.0, cos(radians), sin(radians), 1.0, 0.0, 0.0]
         // Set our listener orientation (rotation)
         alListenerfv(AL_ORIENTATION, ori)
     }

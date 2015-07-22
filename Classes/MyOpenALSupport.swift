@@ -52,18 +52,17 @@
 
  */
 
-import OpenAL.AL
-import OpenAL.ALC
+import OpenAL
 import AudioToolbox
 
 func TestAudioFormatNativeEndian(f: AudioStreamBasicDescription) -> Bool {
-    return ((f.mFormatID == kAudioFormatLinearPCM.ui)
-        && ((f.mFormatFlags & kAudioFormatFlagIsBigEndian.ui) == kAudioFormatFlagsNativeEndian.ui)
+    return ((f.mFormatID == kAudioFormatLinearPCM)
+        && ((f.mFormatFlags & kAudioFormatFlagIsBigEndian) == kAudioFormatFlagsNativeEndian)
     )
 }
 //### alBufferDataStaticProc() removed.
 
-func MyGetOpenALAudioData(inFileURL: NSURL, inout outDataSize: ALsizei, inout outDataFormat: ALenum, inout outSampleRate: ALsizei) -> UnsafeMutablePointer<Void> {
+func MyGetOpenALAudioData(inFileURL: NSURL, inout _ outDataSize: ALsizei, inout _ outDataFormat: ALenum, inout _ outSampleRate: ALsizei) -> UnsafeMutablePointer<Void> {
     var err = noErr
     var fileDataSize: UInt64 = 0
     var theFileFormat: AudioStreamBasicDescription = AudioStreamBasicDescription()
@@ -73,11 +72,11 @@ func MyGetOpenALAudioData(inFileURL: NSURL, inout outDataSize: ALsizei, inout ou
 
     Exit: do {
 	// Open a file with ExtAudioFileOpen()
-        err = AudioFileOpenURL(inFileURL, kAudioFileReadPermission.b, 0, &afid)
+        err = AudioFileOpenURL(inFileURL, .ReadPermission, 0, &afid)
         if err != 0 {print("MyGetOpenALAudioData: AudioFileOpenURL FAILED, Error = \(err)"); break Exit}
 
 	// Get the audio data format
-        err = AudioFileGetProperty(afid, kAudioFilePropertyDataFormat.ui, &thePropertySize, &theFileFormat)
+        err = AudioFileGetProperty(afid, kAudioFilePropertyDataFormat, &thePropertySize, &theFileFormat)
         if err != 0 {print("MyGetOpenALAudioData: AudioFileGetProperty(kAudioFileProperty_DataFormat) FAILED, Error = \(err)"); break Exit}
 
         if theFileFormat.mChannelsPerFrame > 2 {
@@ -85,7 +84,7 @@ func MyGetOpenALAudioData(inFileURL: NSURL, inout outDataSize: ALsizei, inout ou
             break Exit
         }
 
-        if ((theFileFormat.mFormatID != kAudioFormatLinearPCM.ui) || (!TestAudioFormatNativeEndian(theFileFormat))) {
+        if ((theFileFormat.mFormatID != kAudioFormatLinearPCM) || (!TestAudioFormatNativeEndian(theFileFormat))) {
             print("MyGetOpenALAudioData - Unsupported Format, must be little-endian PCM")
             break Exit
         }
@@ -97,7 +96,7 @@ func MyGetOpenALAudioData(inFileURL: NSURL, inout outDataSize: ALsizei, inout ou
 
 
         thePropertySize = sizeofValue(fileDataSize).ui
-        err = AudioFileGetProperty(afid, kAudioFilePropertyAudioDataByteCount.ui, &thePropertySize, &fileDataSize)
+        err = AudioFileGetProperty(afid, kAudioFilePropertyAudioDataByteCount, &thePropertySize, &fileDataSize)
         if err != 0 {print("MyGetOpenALAudioData: AudioFileGetProperty(kAudioFilePropertyAudioDataByteCount) FAILED, Error = \(err)"); break Exit}
 
 	// Read all the data into memory
@@ -116,7 +115,7 @@ func MyGetOpenALAudioData(inFileURL: NSURL, inout outDataSize: ALsizei, inout ou
             break Exit
         }
 
-    } while false
+    }
 	// Dispose the ExtAudioFileRef, it is no longer needed
     if afid != nil {AudioFileClose(afid)}
     return theData

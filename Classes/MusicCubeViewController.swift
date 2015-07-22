@@ -302,16 +302,16 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
         
         let image = UIImage(named: "speaker.png")!
         let textureloader = GLKTextureLoader(sharegroup: context.sharegroup)
-        textureloader.textureWithCGImage(image.CGImage, options: nil, queue: nil) {textureInfo, error in
+        textureloader.textureWithCGImage(image.CGImage!, options: nil, queue: nil) {textureInfo, error in
             
             if error != nil {
                 NSLog("Error loading texture %@",error!)
             } else {
                 for f in 0..<6 {
-                    self.cube[f].effect!.texture2d0.name = textureInfo.name
+                    self.cube[f].effect!.texture2d0.name = textureInfo!.name
                 }
                 
-                self.cubeTexture = textureInfo.name
+                self.cubeTexture = textureInfo!.name
             }
         }
     }
@@ -348,7 +348,7 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
         teapot.effect!.prepareToDraw()
         
         for teapot_indices in new_teapot_indicies {
-            var arr: [GLshort] = teapot_indices
+            let arr: [GLshort] = teapot_indices
             glDrawElements(GL_TRIANGLE_STRIP.ui, teapot_indices.count.i, GL_UNSIGNED_SHORT.ui, arr)
         }
         
@@ -458,7 +458,7 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
         self.view.addGestureRecognizer(recognizer)
     }
     
-    @IBAction func handleSingleTapFrom(UIGestureRecognizer) {
+    @IBAction func handleSingleTapFrom(_: UIGestureRecognizer) {
         mode++
         if mode > 4 { mode = 1 }
         
