@@ -174,7 +174,7 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
     private func makeCircle(inout circle: BaseEffect, withNumOfSegments segments: GLint, radius: GLfloat) {
         var vertices: [GLfloat] = Array(count: segments.l * 3, repeatedValue: 0)
         var count = 0
-        for i in stride(from: 0.0.f, to: 360.0, by: 360.0/segments.f) {
+        for i in 0.0.f.stride(to: 360.0, by: 360.0/segments.f) {
             vertices[count++] = 0  //x
             vertices[count++] = (cos(DegreesToRadians(GLfloat(i)))*radius);	//y
             vertices[count++] = (sin(DegreesToRadians(GLfloat(i)))*radius);	//z
