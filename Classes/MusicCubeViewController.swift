@@ -175,9 +175,12 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
         var vertices: [GLfloat] = Array(count: segments.l * 3, repeatedValue: 0)
         var count = 0
         for i in 0.0.f.stride(to: 360.0, by: 360.0/segments.f) {
-            vertices[count++] = 0  //x
-            vertices[count++] = (cos(DegreesToRadians(GLfloat(i)))*radius);	//y
-            vertices[count++] = (sin(DegreesToRadians(GLfloat(i)))*radius);	//z
+            vertices[count] = 0  //x
+            count += 1
+            vertices[count] = (cos(DegreesToRadians(GLfloat(i)))*radius);	//y
+            count += 1
+            vertices[count] = (sin(DegreesToRadians(GLfloat(i)))*radius);	//z
+            count += 1
         }
         
         let effect = GLKBaseEffect()
@@ -420,7 +423,8 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
         self.drawCube()
     }
     
-    private func deleteBaseEffect(var e: BaseEffect) {
+    private func deleteBaseEffect(_e: BaseEffect) {
+        var e = _e
         if e.vertexBuffer != 0 {
             glDeleteBuffers(1, &e.vertexBuffer)
         }
@@ -453,13 +457,13 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
     
     private func createGestureRecognizers() {
         // Create a single tap recognizer and add it to the view
-        let recognizer = UITapGestureRecognizer(target: self, action: "handleSingleTapFrom:")
+        let recognizer = UITapGestureRecognizer(target: self, action: #selector(MusicCubeViewController.handleSingleTapFrom(_:)))
         recognizer.delegate = self
         self.view.addGestureRecognizer(recognizer)
     }
     
     @IBAction func handleSingleTapFrom(_: UIGestureRecognizer) {
-        mode++
+        mode += 1
         if mode > 4 { mode = 1 }
         
         // update the position of the cube (sound source)
