@@ -83,10 +83,10 @@ private let kButtonScale: GLfloat = 0.1
 
 private let kButtonLeftSpace = 1.2
 
-private func DegreesToRadians(x: GLfloat) -> GLfloat { return (x) * M_PI.f / 180.0 }
+private func DegreesToRadians(_ x: GLfloat) -> GLfloat { return (x) * M_PI.f / 180.0 }
 
-func BUFFER_OFFSET(offset: Int) -> UnsafePointer<Void> {
-    return UnsafePointer((nil as UnsafePointer<CChar>).advancedBy(offset))
+func BUFFER_OFFSET(_ offset: Int) -> UnsafeRawPointer? {
+    return UnsafeRawPointer(bitPattern: offset)
 }
 
 
@@ -105,21 +105,21 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
     // OpenAL playback is wired up in IB
     @IBOutlet var playback: MusicCubePlayback!
     
-    private var innerCircle = BaseEffect()
-    private var outerCircle = BaseEffect()
-    private var teapot = BaseEffect()
-    private var cube: [BaseEffect] = Array(count: 6, repeatedValue: BaseEffect())
+    fileprivate var innerCircle = BaseEffect()
+    fileprivate var outerCircle = BaseEffect()
+    fileprivate var teapot = BaseEffect()
+    fileprivate var cube: [BaseEffect] = Array(repeating: BaseEffect(), count: 6)
     
-    private var context: EAGLContext!
+    fileprivate var context: EAGLContext!
     
-    private var mode: GLuint = 0
+    fileprivate var mode: GLuint = 0
     // teapot
-    private var rot: GLfloat = 0.0
+    fileprivate var rot: GLfloat = 0.0
     // cube
-    private var cubePos: [GLfloat] = [0.0, 0.0, 0.0]
-    private var cubeRot: GLfloat = 0.0
+    fileprivate var cubePos: [GLfloat] = [0.0, 0.0, 0.0]
+    fileprivate var cubeRot: GLfloat = 0.0
     
-    private var cubeTexture: GLuint = 0
+    fileprivate var cubeTexture: GLuint = 0
     
     
     override func didReceiveMemoryWarning() {
@@ -130,15 +130,15 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        context = EAGLContext(API: .OpenGLES2)
+        context = EAGLContext(api: .openGLES2)
         
-        if context == nil || !EAGLContext.setCurrentContext(context) {
+        if context == nil || !EAGLContext.setCurrent(context) {
             NSLog("Failed to create ES context")
         }
         
         let view = self.view as! GLKView
         view.context = context
-        view.drawableDepthFormat = GLKViewDrawableDepthFormat.Format16
+        view.drawableDepthFormat = GLKViewDrawableDepthFormat.format16
         
         mode = 1
         
@@ -155,7 +155,7 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
         self.createGestureRecognizers()
     }
     
-    private func setupPlayback() {
+    fileprivate func setupPlayback() {
         // initialize playback
         // the sound source (cube) starts at the center
         (playback.sourcePos[0], playback.sourcePos[1], playback.sourcePos[2]) = (0, 0, 0)
@@ -171,15 +171,15 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
     
     //MARK: Create Objects
     
-    private func makeCircle(inout circle: BaseEffect, withNumOfSegments segments: GLint, radius: GLfloat) {
-        var vertices: [GLfloat] = Array(count: segments.l * 3, repeatedValue: 0)
+    fileprivate func makeCircle(_ circle: inout BaseEffect, withNumOfSegments segments: GLint, radius: GLfloat) {
+        var vertices: [GLfloat] = Array(repeating: 0, count: segments.l * 3)
         var count = 0
-        for i in 0.0.f.stride(to: 360.0, by: 360.0/segments.f) {
+        for i in stride(from: 0.0.f, to: 360.0, by: 360.0/segments.f) {
             vertices[count] = 0  //x
             count += 1
-            vertices[count] = (cos(DegreesToRadians(GLfloat(i)))*radius);	//y
+            vertices[count] = (cos(DegreesToRadians(GLfloat(i)))*radius)	//y
             count += 1
-            vertices[count] = (sin(DegreesToRadians(GLfloat(i)))*radius);	//z
+            vertices[count] = (sin(DegreesToRadians(GLfloat(i)))*radius)	//z
             count += 1
         }
         
@@ -194,10 +194,10 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
         
         glGenBuffers(1, &vertexBuffer)
         glBindBuffer(GL_ARRAY_BUFFER.ui, vertexBuffer)
-        glBufferData(GL_ARRAY_BUFFER.ui, segments.l * 3 * sizeof(GLfloat), vertices, GL_STATIC_DRAW.ui)
+        glBufferData(GL_ARRAY_BUFFER.ui, segments.l * 3 * MemoryLayout<GLfloat>.size, vertices, GL_STATIC_DRAW.ui)
         
-        glEnableVertexAttribArray(GLKVertexAttrib.Position.rawValue.ui)
-        glVertexAttribPointer(GLKVertexAttrib.Position.rawValue.ui, 3, GL_FLOAT.ui, false, 0, BUFFER_OFFSET(0))
+        glEnableVertexAttribArray(GLKVertexAttrib.position.rawValue.ui)
+        glVertexAttribPointer(GLKVertexAttrib.position.rawValue.ui, 3, GL_FLOAT.ui, false, 0, BUFFER_OFFSET(0))
         
         glBindVertexArrayOES(0)
         
@@ -208,7 +208,7 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
         
     }
     
-    private func makeTeapot() {
+    fileprivate func makeTeapot() {
         let effect = GLKBaseEffect()
         // material
         effect.material.ambientColor = GLKVector4Make(0.4, 0.8, 0.4, 1.0)
@@ -229,18 +229,18 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
         // position
         glGenBuffers(1, &vertexBuffer)
         glBindBuffer(GL_ARRAY_BUFFER.ui, vertexBuffer)
-        glBufferData(GL_ARRAY_BUFFER.ui, teapot_vertices.count * sizeof(GLfloat), teapot_vertices, GL_STATIC_DRAW.ui)
+        glBufferData(GL_ARRAY_BUFFER.ui, teapot_vertices.count * MemoryLayout<GLfloat>.size, teapot_vertices, GL_STATIC_DRAW.ui)
         
-        glEnableVertexAttribArray(GLKVertexAttrib.Position.rawValue.ui)
-        glVertexAttribPointer(GLKVertexAttrib.Position.rawValue.ui, 3, GL_FLOAT.ui, false, 0, BUFFER_OFFSET(0))
+        glEnableVertexAttribArray(GLKVertexAttrib.position.rawValue.ui)
+        glVertexAttribPointer(GLKVertexAttrib.position.rawValue.ui, 3, GL_FLOAT.ui, false, 0, BUFFER_OFFSET(0))
         
         // normal
         glGenBuffers(1, &normalBuffer)
         glBindBuffer(GL_ARRAY_BUFFER.ui, normalBuffer)
-        glBufferData(GL_ARRAY_BUFFER.ui, teapot_normals.count * sizeof(GLfloat), teapot_normals, GL_STATIC_DRAW.ui)
+        glBufferData(GL_ARRAY_BUFFER.ui, teapot_normals.count * MemoryLayout<GLfloat>.size, teapot_normals, GL_STATIC_DRAW.ui)
         
-        glEnableVertexAttribArray(GLKVertexAttrib.Normal.rawValue.ui)
-        glVertexAttribPointer(GLKVertexAttrib.Normal.rawValue.ui, 3, GL_FLOAT.ui, false, 0, BUFFER_OFFSET(0))
+        glEnableVertexAttribArray(GLKVertexAttrib.normal.rawValue.ui)
+        glVertexAttribPointer(GLKVertexAttrib.normal.rawValue.ui, 3, GL_FLOAT.ui, false, 0, BUFFER_OFFSET(0))
         
         glBindVertexArrayOES(0)
         
@@ -251,7 +251,7 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
         
     }
     
-    private func makeCube() {
+    fileprivate func makeCube() {
         // simple cube data
         // our sound source is omnidirectional, adjust the vertices
         // so that speakers in the textures point to all different directions
@@ -285,14 +285,14 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
             
             glGenBuffers(1, &vertexBuffer)
             glBindBuffer(GL_ARRAY_BUFFER.ui, vertexBuffer)
-            glBufferData(GL_ARRAY_BUFFER.ui, cubeVertices[f].count * sizeof(GLfloat), cubeVertices[f], GL_STATIC_DRAW.ui)
+            glBufferData(GL_ARRAY_BUFFER.ui, cubeVertices[f].count * MemoryLayout<GLfloat>.size, cubeVertices[f], GL_STATIC_DRAW.ui)
             
             // position
-            glEnableVertexAttribArray(GLKVertexAttrib.Position.rawValue.ui)
-            glVertexAttribPointer(GLKVertexAttrib.Position.rawValue.ui, 3, GL_SHORT.ui, false, 10, BUFFER_OFFSET(0))
+            glEnableVertexAttribArray(GLKVertexAttrib.position.rawValue.ui)
+            glVertexAttribPointer(GLKVertexAttrib.position.rawValue.ui, 3, GL_SHORT.ui, false, 10, BUFFER_OFFSET(0))
             // texture cooridnates
-            glEnableVertexAttribArray(GLKVertexAttrib.TexCoord0.rawValue.ui)
-            glVertexAttribPointer(GLKVertexAttrib.TexCoord0.rawValue.ui, 2, GL_SHORT.ui, false, 10, BUFFER_OFFSET(6))
+            glEnableVertexAttribArray(GLKVertexAttrib.texCoord0.rawValue.ui)
+            glVertexAttribPointer(GLKVertexAttrib.texCoord0.rawValue.ui, 2, GL_SHORT.ui, false, 10, BUFFER_OFFSET(6))
             
             glBindVertexArrayOES(0)
             
@@ -305,10 +305,10 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
         
         let image = UIImage(named: "speaker.png")!
         let textureloader = GLKTextureLoader(sharegroup: context.sharegroup)
-        textureloader.textureWithCGImage(image.CGImage!, options: nil, queue: nil) {textureInfo, error in
+        textureloader.texture(with: image.cgImage!, options: nil, queue: nil) {textureInfo, error in
             
             if error != nil {
-                NSLog("Error loading texture %@",error!)
+                NSLog("Error loading texture \(error!)")
             } else {
                 for f in 0..<6 {
                     self.cube[f].effect!.texture2d0.name = textureInfo!.name
@@ -321,7 +321,7 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
     
     //MARK: Draw
     
-    private func drawTeapotAndUpdatePlayback() {
+    fileprivate func drawTeapotAndUpdatePlayback() {
         
         rot -= 1.0
         let radius: GLfloat = (kOuterCircleRadius + kInnerCircleRadius) / 2.0
@@ -361,7 +361,7 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
         playback.listenerRotation = rotYInRadians - M_PI.f //listener's rotation in Radians
     }
     
-    private func drawCube() {
+    fileprivate func drawCube() {
         cubeRot += 3
         
         var modelView = GLKMatrix4MakeTranslation(cubePos[0], cubePos[1], cubePos[2])
@@ -392,7 +392,7 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
     
     //MARK: - GLKView and GLKViewController delegate methods
     
-    override func glkView(view: GLKView, drawInRect rect: CGRect) {
+    override func glkView(_ view: GLKView, drawIn rect: CGRect) {
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glClearDepthf(1.0)
         glClear(GL_COLOR_BUFFER_BIT.ui | GL_DEPTH_BUFFER_BIT.ui)
@@ -423,7 +423,7 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
         self.drawCube()
     }
     
-    private func deleteBaseEffect(_e: BaseEffect) {
+    fileprivate func deleteBaseEffect(_ _e: BaseEffect) {
         var e = _e
         if e.vertexBuffer != 0 {
             glDeleteBuffers(1, &e.vertexBuffer)
@@ -447,15 +447,15 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
         
         glDeleteTextures(1, &cubeTexture)
         
-        if EAGLContext.currentContext() == context {
-            EAGLContext.setCurrentContext(nil)
+        if EAGLContext.current() == context {
+            EAGLContext.setCurrent(nil)
         }
         
     }
     
     //MARK: - Gesture Recognizers
     
-    private func createGestureRecognizers() {
+    fileprivate func createGestureRecognizers() {
         // Create a single tap recognizer and add it to the view
         let recognizer = UITapGestureRecognizer(target: self, action: #selector(MusicCubeViewController.handleSingleTapFrom(_:)))
         recognizer.delegate = self

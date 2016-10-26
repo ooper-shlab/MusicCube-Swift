@@ -56,15 +56,15 @@
 import UIKit
 import OpenAL
 
-typealias ALCcontext = COpaquePointer
-typealias ALCdevice = COpaquePointer
-import AVFoundation.AVAudioSession
+typealias ALCcontext = OpaquePointer
+typealias ALCdevice = OpaquePointer
+import AVFoundation
 
 @objc(MusicCubePlayback)
 class MusicCubePlayback: NSObject {
     var _source: ALuint = 0
     var _buffer: ALuint = 0
-    var _data: UnsafeMutablePointer<Void> = nil
+    var _data: UnsafeMutableRawPointer? = nil
     var _sourceVolume: ALfloat = 0
     
     var playing: Bool = false // Whether the sound is playing or stopped
@@ -82,17 +82,17 @@ class MusicCubePlayback: NSObject {
     //MARK: Object Init / Maintenance
     
     
-    func handleInterruption(notification: NSNotification) {
+    func handleInterruption(_ notification: Notification) {
         let interruptionType = notification.userInfo![AVAudioSessionInterruptionTypeKey]! as! UInt
         
-        if interruptionType == AVAudioSessionInterruptionType.Began.rawValue {
+        if interruptionType == AVAudioSessionInterruptionType.began.rawValue {
             // do nothing
             self.teardownOpenAL()
             if playing {
                 wasInterrupted = true
                 playing = false
             }
-        } else if interruptionType == AVAudioSessionInterruptionType.Ended.rawValue {
+        } else if interruptionType == AVAudioSessionInterruptionType.ended.rawValue {
             do {
                 try AVAudioSession.sharedInstance().setActive(true)
             } catch let error as NSError { NSLog("Error setting audio session active! %@", error) }
@@ -115,9 +115,9 @@ class MusicCubePlayback: NSObject {
         let sessionInstance = AVAudioSession.sharedInstance()
         
         // add interruption handler
-        NSNotificationCenter.defaultCenter().addObserver(self,
+        NotificationCenter.default.addObserver(self,
             selector: #selector(MusicCubePlayback.handleInterruption(_:)),
-            name: AVAudioSessionInterruptionNotification,
+            name: NSNotification.Name.AVAudioSessionInterruption,
             object: sessionInstance)
         
         do {
@@ -145,16 +145,16 @@ class MusicCubePlayback: NSObject {
     
     //MARK: OpenAL
     
-    private func initBuffer() {
+    fileprivate func initBuffer() {
         var error = AL_NO_ERROR
         var format: ALenum = 0
         var size: ALsizei = 0
         var freq: ALsizei = 0
         
-        let bundle = NSBundle.mainBundle()
+        let bundle = Bundle.main
         
         // get some audio data from a wave file
-        let fileURL = NSURL(fileURLWithPath: bundle.pathForResource("sound", ofType: "wav")!)
+        let fileURL = URL(fileURLWithPath: bundle.path(forResource: "sound", ofType: "wav")!)
             
             _data = MyGetOpenALAudioData(fileURL, &size, &format, &freq)
             
@@ -166,7 +166,7 @@ class MusicCubePlayback: NSObject {
             
             // use the static buffer data API
             alBufferData(_buffer, format, _data, size, freq)
-            _data.dealloc(Int(size))
+            _data?.deallocate(bytes: Int(size), alignedTo: MemoryLayout<UInt8>.alignment)
             
             error = alGetError()
             if error != AL_NO_ERROR {
@@ -178,7 +178,7 @@ class MusicCubePlayback: NSObject {
 //        }
     }
     
-    private func initSource() {
+    fileprivate func initSource() {
         var error: ALenum = AL_NO_ERROR
         alGetError() // Clear the error
         
@@ -204,8 +204,8 @@ class MusicCubePlayback: NSObject {
     
     func initOpenAL() {
         var error: ALenum = 0
-        var newContext: ALCcontext = nil
-        var newDevice: ALCdevice = nil
+        var newContext: ALCcontext? = nil
+        var newDevice: ALCdevice? = nil
         
         // Create a new OpenAL Device
         // Pass NULL to specify the system’s default output device
@@ -244,8 +244,8 @@ class MusicCubePlayback: NSObject {
     }
     
     func teardownOpenAL() {
-        var context: ALCcontext = nil
-        var device: ALCdevice = nil
+        var context: ALCcontext? = nil
+        var device: ALCdevice? = nil
         
         // Delete the Sources
         alDeleteSources(1, &_source)
@@ -294,7 +294,7 @@ class MusicCubePlayback: NSObject {
     
     //MARK: Setters / Getters
     
-    private func didSetSourcePos(SOURCEPOS: [Float]) {
+    fileprivate func didSetSourcePos(_ SOURCEPOS: [Float]) {
         
         // Move our audio source coordinates
         alSourcefv(_source, AL_POSITION, sourcePos)
@@ -302,7 +302,7 @@ class MusicCubePlayback: NSObject {
     
     
     
-    private func didSetListenerPos(LISTENERPOS: [Float]) {
+    fileprivate func didSetListenerPos(_ LISTENERPOS: [Float]) {
         
         // Move our listener coordinates
         alListenerfv(AL_POSITION, listenerPos)
@@ -310,7 +310,7 @@ class MusicCubePlayback: NSObject {
     
     
     
-    private func didSetListenerRotation(radians: Float) {
+    fileprivate func didSetListenerRotation(_ radians: Float) {
         let ori: [Float] = [0.0, cos(radians), sin(radians), 1.0, 0.0, 0.0]
         // Set our listener orientation (rotation)
         alListenerfv(AL_ORIENTATION, ori)

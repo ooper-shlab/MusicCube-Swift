@@ -55,25 +55,27 @@
 import OpenAL
 import AudioToolbox
 
-func TestAudioFormatNativeEndian(f: AudioStreamBasicDescription) -> Bool {
+func TestAudioFormatNativeEndian(_ f: AudioStreamBasicDescription) -> Bool {
     return ((f.mFormatID == kAudioFormatLinearPCM)
         && ((f.mFormatFlags & kAudioFormatFlagIsBigEndian) == kAudioFormatFlagsNativeEndian)
     )
 }
 //### alBufferDataStaticProc() removed.
 
-func MyGetOpenALAudioData(inFileURL: NSURL, inout _ outDataSize: ALsizei, inout _ outDataFormat: ALenum, inout _ outSampleRate: ALsizei) -> UnsafeMutablePointer<Void> {
+func MyGetOpenALAudioData(_ inFileURL: URL, _ outDataSize: inout ALsizei, _ outDataFormat: inout ALenum, _ outSampleRate: inout ALsizei) -> UnsafeMutableRawPointer? {
     var err = noErr
     var fileDataSize: UInt64 = 0
     var theFileFormat: AudioStreamBasicDescription = AudioStreamBasicDescription()
-    var thePropertySize = UInt32(strideofValue(theFileFormat))
-    var afid: AudioFileID = nil
-    var theData: UnsafeMutablePointer<Void> = nil
+    var thePropertySize = UInt32(MemoryLayout.stride(ofValue: theFileFormat))
+    var afid: AudioFileID? = nil
+    var theData: UnsafeMutableRawPointer? = nil
 
     Exit: do {
 	// Open a file with ExtAudioFileOpen()
-        err = AudioFileOpenURL(inFileURL, .ReadPermission, 0, &afid)
-        if err != 0 {print("MyGetOpenALAudioData: AudioFileOpenURL FAILED, Error = \(err)"); break Exit}
+        err = AudioFileOpenURL(inFileURL as CFURL, .readPermission, 0, &afid)
+        guard err == 0, let afid = afid  else {
+            print("MyGetOpenALAudioData: AudioFileOpenURL FAILED, Error = \(err)"); break Exit
+        }
 
 	// Get the audio data format
         err = AudioFileGetProperty(afid, kAudioFilePropertyDataFormat, &thePropertySize, &theFileFormat)
@@ -95,21 +97,21 @@ func MyGetOpenALAudioData(inFileURL: NSURL, inout _ outDataSize: ALsizei, inout 
         }
 
 
-        thePropertySize = sizeofValue(fileDataSize).ui
+        thePropertySize = MemoryLayout.size(ofValue: fileDataSize).ui
         err = AudioFileGetProperty(afid, kAudioFilePropertyAudioDataByteCount, &thePropertySize, &fileDataSize)
         if err != 0 {print("MyGetOpenALAudioData: AudioFileGetProperty(kAudioFilePropertyAudioDataByteCount) FAILED, Error = \(err)"); break Exit}
 
 	// Read all the data into memory
         var dataSize = UInt32(fileDataSize)
-        theData = .alloc(Int(dataSize))
-        err = AudioFileReadBytes(afid, false, 0, &dataSize, theData)
+        theData = UnsafeMutableRawPointer.allocate(bytes: Int(dataSize), alignedTo: MemoryLayout<UInt8>.alignment)
+        err = AudioFileReadBytes(afid, false, 0, &dataSize, theData!)
         if err == noErr {
             outDataSize = ALsizei(dataSize)
             outDataFormat = theFileFormat.mChannelsPerFrame > 1 ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16
             outSampleRate = ALsizei(theFileFormat.mSampleRate)
         } else {
 			// failure
-            theData.dealloc(Int(dataSize))
+            theData?.deallocate(bytes: Int(dataSize), alignedTo: MemoryLayout<UInt8>.alignment)
             theData = nil // make sure to return NULL
             print("MyGetOpenALAudioData: ExtAudioFileRead FAILED, Error = \(err)")
             break Exit
@@ -117,7 +119,7 @@ func MyGetOpenALAudioData(inFileURL: NSURL, inout _ outDataSize: ALsizei, inout 
 
     }
 	// Dispose the ExtAudioFileRef, it is no longer needed
-    if afid != nil {AudioFileClose(afid)}
+    if let afid = afid {AudioFileClose(afid)}
     return theData
 }
 

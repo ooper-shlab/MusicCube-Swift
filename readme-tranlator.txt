@@ -14,5 +14,5 @@ You should not contact to Apple or SHLab(jp) about any faults caused by my trans
 
 ### Build
 
-iOS 9 SDK, Xcode 7.3
+iOS 10.1 SDK, Xcode 8.1 GM seed
 
