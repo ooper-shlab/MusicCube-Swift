@@ -117,7 +117,7 @@ class MusicCubePlayback: NSObject {
         // add interruption handler
         NotificationCenter.default.addObserver(self,
             selector: #selector(MusicCubePlayback.handleInterruption(_:)),
-            name: NSNotification.Name.AVAudioSessionInterruption,
+            name: .AVAudioSessionInterruption,
             object: sessionInstance)
         
         do {

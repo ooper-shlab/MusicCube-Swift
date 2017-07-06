@@ -83,7 +83,7 @@ private let kButtonScale: GLfloat = 0.1
 
 private let kButtonLeftSpace = 1.2
 
-private func DegreesToRadians(_ x: GLfloat) -> GLfloat { return (x) * M_PI.f / 180.0 }
+private func DegreesToRadians(_ x: GLfloat) -> GLfloat { return (x) * .pi / 180.0 }
 
 func BUFFER_OFFSET(_ offset: Int) -> UnsafeRawPointer? {
     return UnsafeRawPointer(bitPattern: offset)
@@ -341,7 +341,7 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
             rotYInRadians = atan2(teapotPos[2]-cubePos[2], teapotPos[1]-cubePos[1])
         }
         
-        modelView = GLKMatrix4Rotate(modelView, -M_PI_2.f, 0, 0, 1) //we want to display in landscape mode
+        modelView = GLKMatrix4Rotate(modelView, -.pi/2, 0, 0, 1) //we want to display in landscape mode
         modelView = GLKMatrix4Rotate(modelView, rotYInRadians, 0, 1, 0)
         
         teapot.effect!.transform.modelviewMatrix = modelView
@@ -358,7 +358,7 @@ class MusicCubeViewController: GLKViewController, UIGestureRecognizerDelegate {
         
         // update playback
         playback.listenerPos = teapotPos //listener's position
-        playback.listenerRotation = rotYInRadians - M_PI.f //listener's rotation in Radians
+        playback.listenerRotation = rotYInRadians - .pi //listener's rotation in Radians
     }
     
     fileprivate func drawCube() {

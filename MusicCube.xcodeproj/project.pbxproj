@@ -67,7 +67,7 @@
 		D7188F991AF0141700959896 /* teapot.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = teapot.swift; sourceTree = "<group>"; };
 		D7188F9B1AF015D600959896 /* MusicCubeViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MusicCubeViewController.swift; sourceTree = "<group>"; };
 		D7188F9D1AF0583400959896 /* MusicCubeAppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MusicCubeAppDelegate.swift; sourceTree = "<group>"; };
-		D7188F9F1AF059F400959896 /* readme-tranlator.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "readme-tranlator.txt"; sourceTree = "<group>"; };
+		D7188F9F1AF059F400959896 /* README2.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README2.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,10 +112,10 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
-				D7188F9F1AF059F400959896 /* readme-tranlator.txt */,
 				D7188F931AEFBD3300959896 /* LICENSE.txt */,
 				D7188F941AEFBD3300959896 /* README.md */,
 				AF28F9281061A52A00B93E5C /* ReadMe.txt */,
+				D7188F9F1AF059F400959896 /* README2.md */,
 				080E96DDFE201D6D7F000001 /* Classes */,
 				29B97315FDCFA39411CA2CEA /* Other Sources */,
 				29B97317FDCFA39411CA2CEA /* Resources */,
